@@ -13,10 +13,18 @@
     "accessories": [
         {
             "accessory": "VSX",
-            "name": "Pioneer VSX-921",
+            "name": "Pioneer VSX On/Off",
             "description": "AV Receiver",
             "ip": "192.168.178.20",
             "port": 23
+        },
+        {
+            "accessory": "VSX",
+            "description": "Pioneer VSX - Apple TV",
+            "ip": "192.168.178.20",
+            "name": "Receiver Apple TV",
+            "port": 23,
+            "input": "15"
         }
     ]
 }
