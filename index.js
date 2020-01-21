@@ -22,8 +22,8 @@ VSX.prototype.getServices = function () {
 
   this.switchService = new Service.Switch(this.name);
   this.switchService.getCharacteristic(Characteristic.On)
-  .on('set', this.setOn.bind(this))
-  .on('get', this.getOn.bind(this));
+      .on('set', this.setOn.bind(this))
+      .on('get', this.getOn.bind(this));
 
   return [this.switchService, this.informationService];
 };
@@ -111,5 +111,3 @@ VSX.prototype.setOn = function (on, callback) {
   }
   callback();
 };
-
-
