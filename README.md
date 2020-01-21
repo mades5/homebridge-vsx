@@ -1,8 +1,9 @@
 # homebridge-vsx-2 [![npm version](https://badge.fury.io/js/homebridge-vsx-2.svg)](https://badge.fury.io/js/homebridge-vsx-2)
 
 homebridge-vsx-2 is a plugin made for [homebridge](https://github.com/nfarina/homebridge),
-which allows switching on and off your Pioneer AV receiver. All AV receivers (VSX and SC),
-which work with the iControl AV5 App are supported.
+which allows switching on and off your Pioneer AV receiver and change the input channel. 
+All AV receivers (VSX and SC), which work with the iControl AV5 App are supported.
+This work is derived from the original "hombridge-vsx" and is meant to be a drop-in replacement. 
 
 ## Installation
 
