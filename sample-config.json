@@ -25,6 +25,16 @@
             "name": "Receiver Apple TV",
             "port": 23,
             "input": "15"
+        },
+        {
+            "accessory": "VSX",
+            "description": "Pioneer VSX - Sometimes unavailable",
+            "ip": "192.168.122.12",
+            "name": "Receiver XYZ",
+            "port": 23,
+            "input": "18",
+            "timeout": "8000"
         }
+
     ]
 }
