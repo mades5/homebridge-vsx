@@ -9,7 +9,7 @@ const REQUEST_POWER_OFF = 'PF\r\n';
 const REQUEST_POWER_ON = 'PO\r\n';
 const INPUT_PREFIX = "FN";
 const REQUEST_INPUT = INPUT_PREFIX + '\r\n';
-const TIMEOUT = 5000;
+const TIMEOUT = 8000;
 
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
