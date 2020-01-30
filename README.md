@@ -1,4 +1,6 @@
-# homebridge-vsx-2 [![npm version](https://badge.fury.io/js/homebridge-vsx-2.svg)](https://badge.fury.io/js/homebridge-vsx-2)
+# homebridge-vsx-2 
+
+![npm](https://img.shields.io/npm/dt/homebridge-vsx-2) ![npm](https://img.shields.io/npm/v/homebridge-vsx-2)
 
 homebridge-vsx-2 is a plugin made for [homebridge](https://github.com/nfarina/homebridge),
 which allows switching on and off your Pioneer AV receiver and change the input channel. 
