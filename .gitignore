@@ -64,3 +64,5 @@ typings/
 
 /.idea
 /homebridge-vsx.iml
+/conf/
+/dist/
