@@ -9,7 +9,6 @@ import {
   Service,
 } from "homebridge";
 
-import {Input} from "./Input";
 import {PLATFORM_NAME, PLUGIN_NAME } from "./settings";
 import {VSXPlatformAccessory} from "./VSXPlatformAccessory";
 
@@ -22,9 +21,21 @@ export class VSXPlatform implements DynamicPlatformPlugin {
   constructor(public readonly log: Logging, public readonly config: PlatformConfig, public readonly api: API) {
     api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.info("VSX Platform 'didFinishLaunching'");
-      this.config.inputs.forEach((value: Input) => {
-        this.addAccessory(value);
-      });
+
+      const uuid = this.api.hap.uuid.generate(this.config.ip + this.config.port);
+      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+
+      if (existingAccessory) {
+        this.log.info('Restoring existing VSX accessory from cache:', existingAccessory.displayName);
+        new VSXPlatformAccessory(this, existingAccessory);
+      } else {
+        this.log.info('Adding new VSX accessory');
+        const accessory = new this.api.platformAccessory(this.config.name!, uuid);
+        new VSXPlatformAccessory(this, accessory);
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      }
+
+
     });
   }
 
@@ -38,20 +49,5 @@ export class VSXPlatform implements DynamicPlatformPlugin {
   }
 
 
-  addAccessory(input: Input) {
-    const uuid = this.api.hap.uuid.generate(input.name + input.number);
-    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-
-    if (existingAccessory) {
-      this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-      new VSXPlatformAccessory(this, existingAccessory, input);
-    } else {
-      this.log.info('Adding new accessory:', input.name);
-      const accessory = new this.api.platformAccessory(input.name, uuid);
-      accessory.context.input = input;
-      new VSXPlatformAccessory(this, accessory, input);
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-    }
-  }
 }
 
