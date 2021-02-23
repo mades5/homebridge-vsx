@@ -27,6 +27,7 @@ export class VSXPlatformAccessory {
   private readonly port: number;
   private readonly log: Logging;
   private readonly inputs: Input[];
+  private inputServices: Map<string, Service> = new Map<string, Service>();
 
   constructor(private readonly platform: VSXPlatform, private readonly accessory: PlatformAccessory) {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
@@ -40,12 +41,16 @@ export class VSXPlatformAccessory {
     this.log = platform.log;
 
     for (const input of this.inputs) {
+      this.log.info("Adding InputService for " + input.name + " number " + input.number);
       const switchService = this.accessory.getService(input.name) || this.accessory.addService(this.platform.Service.Switch, input.name, input.name);
       switchService.getCharacteristic(this.platform.Characteristic.On)
       .on('set', (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         const client = new Socket();
         client.setTimeout(this.timeout);
-        this.connectionErrorHandler(client, callback);
+        client.on('timeout', () => {
+          callback(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+          client.destroy();
+        });
 
         if (value) {
           // Request Power On
@@ -60,7 +65,7 @@ export class VSXPlatformAccessory {
               this.log.info("Change input to " + input.number);
               client.write(input.number + REQUEST_INPUT);
             }
-            callback();
+            this.updateStatus();
             client.destroy();
           });
         }
@@ -73,84 +78,64 @@ export class VSXPlatformAccessory {
           });
 
           client.on('data', (data) => {
-            callback();
+            this.updateStatus();
             client.destroy();
           });
         }
 
       })
       .on('get', (callback: CharacteristicGetCallback) => {
-        const client = new Socket();
-        client.setTimeout(this.timeout);
-        this.connectionErrorHandler(client, callback);
-
-        // Query Power
-        client.connect(this.port, this.ip, () => {
-          this.log.info('Query Power Status on ' + this.ip + ':' + this.port);
-          client.write(QUERY_POWER);
-        });
-
-        // Handle Response
-        client.on('data', (data) => {
-          // me.log('Received data: ' + data);
-          const response = data.toString();
-          if (response.includes(STATUS_POWER_OFF)) {
-            this.reportSwitchOff(client, callback);
-          }
-          if (response.includes(STATUS_POWER_ON)) {
-            this.queryInput(client, callback, input);
-          }
-          if (response.includes(INPUT_PREFIX)) {
-            this.reportOnIfInputMatches(client, callback, input, response);
-          }
-        });
+        this.updateStatus();
       });
+      this.inputServices.set(input.number, switchService);
     }
+
   }
 
-  connectionErrorHandler(client: Socket, callback: CharacteristicGetCallback) {
+  updateStatus() {
+    const client = new Socket();
+    client.setTimeout(this.timeout);
+    client.on('timeout', () => {
+      this.inputServices.forEach(value => value.updateCharacteristic(this.platform.Characteristic.On, false));
+      client.destroy()
+    });
     client.on('error', (ex) => {
       this.log.error("Received an error while communicating" + ex);
+      this.inputServices.forEach(value => value.updateCharacteristic(this.platform.Characteristic.On, false));
       client.destroy();
-      callback(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     });
-    client.on('timeout', () => {
-      this.log.error("Received a timeout while communicating");
-      client.destroy();
-      callback(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+
+    // Query Power
+    client.connect(this.port, this.ip, () => {
+      this.log.info('Query Power Status on ' + this.ip + ':' + this.port);
+      client.write(QUERY_POWER);
     });
-  }
 
-  reportSwitchOff(client: Socket, callback: CharacteristicGetCallback) {
-    this.log.info("Switch Off");
-    client.destroy();
-    callback(null, false);
-  }
+    // Handle Response
+    client.on('data', (data) => {
+      const response = data.toString();
+      if (response.includes(STATUS_POWER_OFF)) {
+        this.inputServices.forEach(value => value.updateCharacteristic(this.platform.Characteristic.On, false));
+        client.destroy();
+        return;
+      }
+      if (response.includes(STATUS_POWER_ON)) {
+        client.write(QUERY_INPUT);
+        return;
+      }
+      if (response.includes(INPUT_PREFIX)) {
+        const activeInput = response.substr(INPUT_PREFIX.length, 2);
+        this.inputServices.forEach((value, key) => {
+          if (key == activeInput) {
+            this.log.info("Set input to on " + activeInput + " : " + key);
+            this.inputServices.get(activeInput)?.updateCharacteristic(this.platform.Characteristic.On, true);
+          } else {
+            this.log.info("Set input to off " + activeInput + " : " + key);
+            this.inputServices.get(activeInput)?.updateCharacteristic(this.platform.Characteristic.On, false);
+          }
+        })
+      }
+    });
 
-  reportSwitchOn(client: Socket, callback: CharacteristicGetCallback) {
-    this.log.info("Switch On")
-    client.destroy();
-    callback(null, true);
   }
-
-  queryInput(client: Socket, callback: CharacteristicGetCallback, input: Input) {
-    this.log.info("Power is On");
-    if (input.number) {
-      this.log.info("Setting input to " + input.number);
-      client.write(QUERY_INPUT); // Request input
-    } else {
-      this.reportSwitchOn(client, callback);
-    }
-  }
-
-  reportOnIfInputMatches(client: Socket, callback: CharacteristicGetCallback, input: Input, response: string) {
-    if (response.includes(input.number!.toString())) {
-      this.log.info("Receiver has correct input selected")
-      this.reportSwitchOn(client, callback);
-    } else {
-      this.log.info("Receiver has different input selected");
-      this.reportSwitchOff(client, callback);
-    }
-  }
-
 }
