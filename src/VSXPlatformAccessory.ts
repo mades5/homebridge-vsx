@@ -82,10 +82,10 @@ export class VSXPlatformAccessory {
             client.destroy();
           });
         }
-
+        callback();
       })
       .on('get', (callback: CharacteristicGetCallback) => {
-        this.updateStatus();
+        callback(null, this.inputServices.get(input.number)!.getCharacteristic(this.platform.Characteristic.On).value);
       });
       this.inputServices.set(input.number, switchService);
     }
