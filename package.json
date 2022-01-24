@@ -1,6 +1,6 @@
 {
   "name": "homebridge-pioneer",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Pioneer-VSX plugin for homebridge: https://github.com/nfarina/homebridge",
   "license": "ISC",
   "keywords": [
@@ -18,7 +18,5 @@
     "url": "git://github.com/mades5/homebridge-prioneer.git"
   },
   "dependencies": {
-    "request": "^2.65.0",
-    "net": ""
   }
 }
